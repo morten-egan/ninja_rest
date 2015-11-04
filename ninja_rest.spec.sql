@@ -12,15 +12,16 @@ as
 
 	-- Type definitions
 	type call_request is record (
-		call_endpoint				varchar2(4000)
-		, call_method				varchar2(100)
-		, call_json					json
+		endpoint					varchar2(4000)
+		, method					varchar2(100)
+		, payload_json				json
 	);
 
 	type call_response is record (
-		result_type					varchar2(200)
-		, result 					json
-		, result_list				json_list
+		response_type				varchar2(200)
+		, response_json				json
+		, response_json_list		json_list
+		, response_clob				clob
 	);
 
 	type text_arr is table of varchar2(4000) index by varchar2(250);
@@ -28,15 +29,59 @@ as
 	-- Package globals
 	session_environment				text_arr;
 	rest_request					call_request;
+	rest_request_headers			text_arr;
 	rest_response					call_response;
 	rest_response_status_code		pls_integer;
 	rest_response_status_reason		varchar2(256);
 	rest_response_headers			text_arr;
-	rest_raw_response				clob;
 
-	-- Default environment settings
+	/** Set a session environment variable
+	* @author Morten Egan
+	* @param variable_name The name of the variable we want to set
+	* @param variable_value The value of the parameter
+	*/
+	procedure setenv (
+		variable_name 					in				varchar2
+		, variable_value				in				varchar2
+	);
+
+	/** Set a request header and value
+	* @author Morten Egan
+	* @param header_name The name of the header
+	* @param header_value The value of header to set
+	*/
+	procedure setheader (
+		header_name						in				varchar2
+		, header_value					in				varchar2
+	);
+
+	/** We need to initiate the call, to clear and reset parameters
+	* @author Morten Egan
+	*/
+	procedure init_rest;
+
+	/** This is the procedure that does the API call
+	* @author Morten Egan
+	* @param request_endpoint The method we are calling
+	* @param request_method GET, POST, UPDATE or DELETE method. Defaults to GET
+	*/
+	procedure rest_request (
+		request_endpoint				in				varchar2
+		, request_method				in				varchar2 default 'GET'
+	);
+
+	/*	Here we set the default environment settings
+	*	We will try and set as many as possible
+	*/
+	-- Transport related parameters
 	session_environment('transport_protocol') := 'https';
 	session_environment('rest_host_port') := '443';
+	session_environment('rest_uri_model') := '[transport_protocol]://[rest_host]:[rest_host_port]/[rest_api_name]/[rest_api_version]/[rest_api_method]';
+	session_environment('max_redirects') := 1;
+
+	/* Here we set standard headers */
+	rest_request_headers('User-Agent') := 'rest-ninja/' || p_version;
+	rest_request_headers('Content-Type') := 'application/json';
 
 end ninja_rest;
 /
