@@ -21,7 +21,7 @@ as
 		response_type				varchar2(200)
 		, response_json				json
 		, response_json_list		json_list
-		, response_clob				clob
+		, response_raw				clob
 	);
 
 	type text_arr is table of varchar2(4000) index by varchar2(250);
@@ -45,6 +45,19 @@ as
 		, variable_value				in				varchar2
 	);
 
+	/** Set session environment based on values in a table.
+	* Expect the table to have the following columns: session_key, rest_name, setting_name, setting_val
+	* @author Morten Egan
+	* @param session_key The key that identifies the individual set of evironment settings that we need to set.
+	* @param rest_name The name of the rest API that these settings are for.
+	* @param table_name The name of the table that holds the settings
+	*/
+	procedure setenv_from_table (
+		session_key						in				varchar2
+		, rest_name						in				varchar2
+		, table_name					in				varchar2
+	);
+
 	/** Set a request header and value
 	* @author Morten Egan
 	* @param header_name The name of the header
@@ -53,6 +66,19 @@ as
 	procedure setheader (
 		header_name						in				varchar2
 		, header_value					in				varchar2
+	);
+
+	/** Set request headers based on values in a table.
+	* Expect the table to have the following columns: session_key, rest_name, header_name, header_val
+	* @author Morten Egan
+	* @param session_key The key that identifies the individual set of request headers that we need to set.
+	* @param rest_name The name of the rest API that these settings are for.
+	* @param table_name The name of the table that holds the settings
+	*/
+	procedure setheader_from_table (
+		session_key						in				varchar2
+		, rest_name						in				varchar2
+		, table_name					in				varchar2
 	);
 
 	/** We need to initiate the call, to clear and reset parameters
@@ -77,7 +103,12 @@ as
 	session_environment('transport_protocol') := 'https';
 	session_environment('rest_host_port') := '443';
 	session_environment('rest_uri_model') := '[transport_protocol]://[rest_host]:[rest_host_port]/[rest_api_name]/[rest_api_version]/[rest_api_method]';
-	session_environment('max_redirects') := 1;
+	session_environment('max_redirects') := '1';
+	session_environment('throw_exception_on_http_error') := 'no';
+	session_environment('use_basic_authentication') := 'no';
+	-- Response related parameters
+	session_environment('response_autoparse') := 'YES';
+	session_environment('response_expect_format') := 'JSON';
 
 	/* Here we set standard headers */
 	rest_request_headers('User-Agent') := 'rest-ninja/' || p_version;
