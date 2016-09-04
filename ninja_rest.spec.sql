@@ -91,28 +91,10 @@ as
 	* @param request_endpoint The method we are calling
 	* @param request_method GET, POST, UPDATE or DELETE method. Defaults to GET
 	*/
-	procedure rest_request (
+	procedure request (
 		request_endpoint				in				varchar2
 		, request_method				in				varchar2 default 'GET'
 	);
-
-	/*	Here we set the default environment settings
-	*	We will try and set as many as possible
-	*/
-	-- Transport related parameters
-	session_environment('transport_protocol') := 'https';
-	session_environment('rest_host_port') := '443';
-	session_environment('rest_uri_model') := '[transport_protocol]://[rest_host]:[rest_host_port]/[rest_api_name]/[rest_api_version]/[rest_api_method]';
-	session_environment('max_redirects') := '1';
-	session_environment('throw_exception_on_http_error') := 'no';
-	session_environment('use_basic_authentication') := 'no';
-	-- Response related parameters
-	session_environment('response_autoparse') := 'YES';
-	session_environment('response_expect_format') := 'JSON';
-
-	/* Here we set standard headers */
-	rest_request_headers('User-Agent') := 'rest-ninja/' || p_version;
-	rest_request_headers('Content-Type') := 'application/json';
 
 end ninja_rest;
 /
